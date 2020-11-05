@@ -27,12 +27,16 @@ Object = {
     class = { name = "Object" },
 }
 
+function Object.proto:constructor() end
+
 function Object.proto:instanceOf(class)
     return getmetatable(self).__index == class.proto
 end
 
 function Object.proto:toString()
-    return tostring(self) .. ", class: " .. self.class.name .. ", super: " .. self.class.super
+    local class = getmetatable(self).class
+
+    return tostring(self) .. ", class: " .. class.name .. ", super: " .. class.super
 end
 
 local function checkSuper(super)
@@ -64,18 +68,16 @@ function class(name, super)
     setmetatable(_class.proto, { __index = super.proto })
 
     function _class.new(...)
-        local self = setmetatable({}, { __index = _class.proto })
-        self.class = _class.class
+        local self = {
+            super = super.proto.constructor,
+        }
 
-        if super.proto.constructor then
-            self.super = super.proto.constructor
-        end
+        setmetatable(self, {
+            __index = _class.proto,
+            class = _class.class,
+        })
 
-        if _class.proto.constructor then
-            _class.proto.constructor(self, ...)
-        elseif super.proto.constructor then
-            super.proto.constructor(self, ...)
-        end
+        _class.proto.constructor(self, ...)
 
         return self
     end
