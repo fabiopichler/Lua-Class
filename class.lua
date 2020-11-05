@@ -31,9 +31,9 @@ function Object.proto:instanceOf(class)
     return getmetatable(self).__index == class.proto
 end
 
---function Object.proto:toString()
---    return tostring(self)
---end
+function Object.proto:toString()
+    return tostring(self) .. ", class: " .. self.class.name .. ", super: " .. self.class.super
+end
 
 local function checkSuper(super)
     return super ~= nil and (type(super) ~= "table" or type(super.proto) ~= "table" or type(super.class) ~= "table")
@@ -65,6 +65,7 @@ function class(name, super)
 
     function _class.new(...)
         local self = setmetatable({}, { __index = _class.proto })
+        self.class = _class.class
 
         if super.proto.constructor then
             self.super = super.proto.constructor
