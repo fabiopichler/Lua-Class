@@ -22,8 +22,21 @@ SOFTWARE.
 
 --]]
 
+Object = {
+    proto = {},
+    class = { name = "Object" },
+}
+
+function Object.proto:instanceOf(class)
+    return getmetatable(self).__index == class.proto
+end
+
+--function Object.proto:toString()
+--    return tostring(self)
+--end
+
 local function checkSuper(super)
-    return super ~= nil and (type(super) ~= "table" or type(super.self) ~= "table" or type(super.class) ~= "table")
+    return super ~= nil and (type(super) ~= "table" or type(super.proto) ~= "table" or type(super.class) ~= "table")
 end
 
 function class(name, super)
@@ -38,30 +51,32 @@ function class(name, super)
         return nil
     end
 
+    super = super or Object
+
     local _class = {
-        self = {},
-        class = { name = name },
+        proto = {},
+        class = {
+            name = name,
+            super = super.class.name,
+        },
     }
 
-    if super then
-        setmetatable(_class.self, { __index = super.self })
-        _class.class.superClass = super.class.name
-    end
+    setmetatable(_class.proto, { __index = super.proto })
 
     function _class.new(...)
-        local o = setmetatable({}, { __index = _class.self })
+        local self = setmetatable({}, { __index = _class.proto })
 
-        if super then
-            o.super = super.self.constructor
+        if super.proto.constructor then
+            self.super = super.proto.constructor
         end
 
-        if o.constructor then
-            o.constructor(o, ...)
-        elseif super and super.self.constructor then
-            super.self.constructor(o, ...)
+        if _class.proto.constructor then
+            _class.proto.constructor(self, ...)
+        elseif super.proto.constructor then
+            super.proto.constructor(self, ...)
         end
 
-        return o
+        return self
     end
 
     return _class
