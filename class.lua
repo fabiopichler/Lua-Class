@@ -22,6 +22,8 @@ SOFTWARE.
 
 --]]
 
+local private = {}
+
 Object = {
     proto = {},
     class = { name = "Object" },
@@ -39,18 +41,14 @@ function Object.proto:toString()
     return tostring(self) .. ", class: " .. class.name .. ", super: " .. class.super
 end
 
-local function checkSuper(super)
-    return super ~= nil and (type(super) ~= "table" or type(super.proto) ~= "table" or type(super.class) ~= "table")
-end
-
-function class(name, super)
+function Object.create(name, super, proto)
 
     if type(name) ~= "string" then
         error "'name' must be a string"
         return nil
     end
 
-    if checkSuper(super) then
+    if private.checkSuper(super) then
         error "'super' is not a valid class"
         return nil
     end
@@ -58,7 +56,7 @@ function class(name, super)
     super = super or Object
 
     local _class = {
-        proto = {},
+        proto = proto or {},
         class = {
             name = name,
             super = super.class.name,
@@ -83,4 +81,12 @@ function class(name, super)
     end
 
     return _class
+end
+
+function class(name, super, proto)
+    return Object.create(name, super, proto)
+end
+
+function private.checkSuper(super)
+    return super ~= nil and (type(super) ~= "table" or type(super.proto) ~= "table" or type(super.class) ~= "table")
 end
